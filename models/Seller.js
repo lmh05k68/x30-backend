@@ -27,7 +27,9 @@ const sellerSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    shopId: String
+    shopId: {
+        type: mongoose.Schema.Types.ObjectId,
+    }
 })
 const SellerModel = mongoose.model(collections.sellers,sellerSchema)
 export default SellerModel

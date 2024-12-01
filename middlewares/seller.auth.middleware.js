@@ -11,7 +11,9 @@ const sellerAuthMiddleware = {
         const { _id } = verifyToken
         const user = await findSellerById(_id)
         if(!user) throw new Error('Unauthorized')
-        req.currentUser = user
+              req.currentUser = user
+        req.shopId = user.shopId
+
         next();
       } catch (error) {
         res.status(401).send({
