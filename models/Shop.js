@@ -12,40 +12,30 @@ const shopSchema = new mongoose.Schema({
         type: String,
         maxLength: 1000
     },
-    password:{
-        type: String,
-        maxLength:1000,
-        required: true
-    },
-    phone: {
+    phones: [{
         type: String,
         maxLength: 20,
-        required: true
-    },
-    date:{
+    }],
+    createdAt:{
         type: Date,
         default: Date.now
     },
     addresses:[
         {
             type: String,
-            address: String,
-            isDefault: Boolean
         },
     ],
     businessLicense:{
         type: String,
-        required: true
     },
     taxCode:{
         type: String,
         maxLength: 20,
-        required: true
+      
     },
     citizenId:{
         type: String,
         maxLength: 50,
-        required: true
     },
     description: String
 })

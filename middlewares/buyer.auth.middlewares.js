@@ -12,6 +12,7 @@ const buyerAuthMiddleware = {
         const user = await findBuyerById(_id)
         if(!user) throw new Error('Unauthorized')
         req.currentUser = user
+
         next();
       } catch (error) {
         res.status(401).send({

@@ -5,7 +5,7 @@ import {validateUpdateAdminRequest} from '../validations/admin.validation.js'
 // const storage = multer.memoryStorage();
 // const upload = multer({ storage: storage });
 const AdminRouter = Router()
-BuyerRouter.get('/admin',buyerProfile)
+BuyerRouter.get('/admin', buyerProfile)
 BuyerRouter.patch('/admin', validateUpdateAdminRequest, adminUpdateProfile,)
 AdminRouter.get('/admin/accounts', getAccounts);
 export default AdminRouter

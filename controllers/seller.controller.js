@@ -10,19 +10,23 @@ cloudinary.config({
 });
 
 import { findSellerByEmail, createSeller, findSeller, findSellerAndUpdate} from '../repositories/seller.repository.js'
+import { createShop } from "../repositories/shop.repository.js";
+import { userStatus } from "../const/user.const.js";
 //người mua đăng kí
 const sellerRegister = async (req, res) => {
     const { name, email, password, phone } = req.body;
     try {
       const checkUser = await findSellerByEmail(email);
       if (checkUser) throw new Error(req.translate('user.emailExisted'));
+      const newShop = await createShop({name, phones: [phone], img: "https://dummyimage.com/200x200/f57070/fff.png&text=hello+world", addresses: [],  businessLicense: "", taxCode: "", citizenId: "", description: "", status: userStatus.active})
       const salt = bcrypt.genSaltSync(+process.env.SALT_ROUNDS);
       const hash = bcrypt.hashSync(password, salt);
       const newUser = await createSeller({
         name,
         email,
         password: hash,
-        phone
+        phone,
+        shopId: newShop._id
       });
       return res.status(201).send({
         message: "Created success",
@@ -45,7 +49,7 @@ const sellerLogin = async (req, res) => {
         user.password
       );
       if (!checkPassword) throw new Error(req.translate('user.wrong'));
-      if(user.status) throw new Error(req.translate('user.banned'))
+      if(user.status == userStatus.inactive) throw new Error(req.translate('user.banned'))
       const { _id } = user;
       const accessToken = jwt.sign({ _id }, process.env.ACCESS_TK_KEY);
       const refreshToken = jwt.sign({ _id }, process.env.REFRESH_TK_KEY);

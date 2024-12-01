@@ -4,7 +4,8 @@ import {Router} from 'express'
 // const upload = multer({ storage: storage });
 import { sellerProfile, sellerUpdateProfile} from "../controllers/seller.controller.js";
 import {validateUpdateSellerRequest} from '../validations/seller.validation.js'
+import sellerAuthMiddleware from '../middlewares/seller.auth.middleware.js';
 const SellerRouter = Router()
-SellerRouter.get('/seller',sellerProfile)
-SellerRouter.patch('/seller', validateUpdateSellerRequest, sellerUpdateProfile)
+SellerRouter.get('/sellerProfile', sellerAuthMiddleware.authentication,sellerProfile)
+SellerRouter.patch('/sellerProfile', sellerAuthMiddleware.authentication, validateUpdateSellerRequest, sellerUpdateProfile)
 export default SellerRouter

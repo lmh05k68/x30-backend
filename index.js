@@ -10,6 +10,8 @@ import buyerAuthMiddleware from './middlewares/buyer.auth.middlewares.js'
 import sellerAuthMiddleware from './middlewares/seller.auth.middleware.js'
 import BuyerRouter from './routes/buyer.route.js'
 import SellerRouter from './routes/seller.route.js'
+import ProductRouter from "./routes/products.routes.js"
+import ProductGroupsRouter from "./routes/productGroups.routes.js"
 import localizationMiddleware from './middlewares/localization.auth.middleware.js'
 dotenv.config()
 
@@ -26,11 +28,14 @@ app.post("/api/v1/buyerLogin",buyerValidateLoginRequest, buyerLogin)
 app.post("/api/v1/sellerRegister",sellerValidateRegisterRequest, sellerRegister)
 app.post("/api/v1/sellerLogin",sellerValidateLoginRequest, sellerLogin)
 
-app.use(buyerAuthMiddleware.authentication)
-app.use(sellerAuthMiddleware.authentication)
+// app.use(buyerAuthMiddleware.authentication)
+// app.use(sellerAuthMiddleware.authentication)
 
-app.use("/api/v1/buyer", BuyerRouter)
-app.use("/api/v1/seller", SellerRouter)
+app.use("/api/v1", BuyerRouter)
+app.use("/api/v1", SellerRouter)
+
+app.use("/api/v1/products", ProductRouter);
+app.use("/api/v1/productgroups", ProductGroupsRouter)
 
 app.listen(PORT, (err) => {
     if(err) throw new Error(err)
