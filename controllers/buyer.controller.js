@@ -10,6 +10,7 @@ cloudinary.config({
 });
 
 import { findBuyerByEmail, createBuyer, findBuyer, findBuyerAndUpdate} from '../repositories/buyer.repository.js'
+import { userStatus } from "../const/user.const.js";
 //người mua đăng kí
 const buyerRegister = async (req, res) => {
   const { name, email, password, phoneNumber } = req.body;
@@ -52,7 +53,7 @@ const buyerLogin = async (req, res) => {
     
     if (!checkPassword) throw new Error(req.translate('user.wrong'));
 
-    if(user.status === 1) throw new Error(req.translate('user.banned'));
+    if(user.status == userStatus.inactive) throw new Error(req.translate('user.banned'));
 
     const { _id } = user;
     const accessToken = jwt.sign({ _id }, process.env.ACCESS_TK_KEY);
