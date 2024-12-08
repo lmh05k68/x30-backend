@@ -2,8 +2,10 @@ import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt";
 import { v2 as cloudinary } from 'cloudinary'
 import dotenv from 'dotenv'
-import { findSeller,findSellerAndUpdate } from '../repositories/seller.repository.js';
-import { findBuyer,findBuyerAndUpdate } from '../repositories/buyer.repository.js';
+import { findSeller,findSellerAndUpdate ,createSeller} from '../repositories/seller.repository.js';
+import { findBuyer,findBuyerAndUpdate,createBuyer } from '../repositories/buyer.repository.js';
+import BuyerModel from '../models/Buyer.js'
+import SellerModel from '../models/Seller.js'
 dotenv.config()
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -74,7 +76,7 @@ const adminRegister = async (req, res) => {
     }
   };
   
-  //profile người mua
+  //profile admin
   const adminProfile = async (req, res) => {
     try {
       const user = req.currentUser;
@@ -90,7 +92,7 @@ const adminRegister = async (req, res) => {
       });
     }
   };
-  //update profile người mua
+  //update profile admin
   const adminUpdateProfile = async (req, res) => {
     const body = req.body
     try {
@@ -110,7 +112,7 @@ const adminRegister = async (req, res) => {
     }
   };
 
-  //lấy danh sách tài khoản người bán
+  //lấy danh sách tài khoản 
   const getAccounts = async (req, res) => {
     try {
       // Lấy danh sách người bán
@@ -168,4 +170,90 @@ const adminRegister = async (req, res) => {
       });
     }
   };
-  export {adminLogin,adminRegister, adminProfile, adminUpdateProfile,getAccounts,toggleAccountStatus}
+
+  //thêm tài khoản người mua/bán
+  const addAccount = async (req, res) => {
+    const { type } = req.params; // "buyer" hoặc "seller"
+    const data = req.body;
+  
+    try {
+      if (!['buyer', 'seller'].includes(type)) {
+        throw new Error('Invalid account type');
+      }
+  
+      const createFn = type === 'buyer' ? createBuyer : createSeller;
+  
+      const newAccount = await createFn(data);
+      res.status(201).send({
+        message: 'Account created successfully',
+        newAccount,
+      });
+    } catch (error) {
+      res.status(400).send({
+        message: error.message,
+      });
+    }
+  };
+  
+  //sửa tài khoản người mua/bán
+  const updateAccount = async (req, res) => {
+    const { type, id } = req.params; // "buyer" hoặc "seller", và ID của tài khoản
+    const data = req.body;
+  
+    try {
+      if (!['buyer', 'seller'].includes(type)) {
+        throw new Error('Invalid account type');
+      }
+  
+      const updateFn = type === 'buyer' ? findBuyerAndUpdate : findSellerAndUpdate;
+  
+      const updatedAccount = await updateFn(
+        { _id: id },
+        { ...data },
+        { new: true }
+      );
+  
+      if (!updatedAccount) {
+        throw new Error('Account not found');
+      }
+  
+      res.status(200).send({
+        message: 'Account updated successfully',
+        updatedAccount,
+      });
+    } catch (error) {
+      res.status(400).send({
+        message: error.message,
+      });
+    }
+  };
+
+  //xóa tài khoản người mua/bán
+  const deleteAccount = async (req, res) => {
+    const { type, id } = req.params;
+  
+    try {
+      if (!['buyer', 'seller'].includes(type)) {
+        throw new Error('Invalid account type');
+      }
+  
+      const deleteFn =
+        type === 'buyer' ? BuyerModel.findByIdAndDelete : SellerModel.findByIdAndDelete;
+  
+      const deletedAccount = await deleteFn(id);
+  
+      if (!deletedAccount) {
+        throw new Error('Account not found');
+      }
+  
+      res.status(200).send({
+        message: 'Account deleted successfully',
+      });
+    } catch (error) {
+      res.status(400).send({
+        message: error.message,
+      });
+    }
+  };
+  
+  export {adminLogin,adminRegister, adminProfile, adminUpdateProfile,getAccounts,toggleAccountStatus,deleteAccount,updateAccount,addAccount}
