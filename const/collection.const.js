@@ -4,6 +4,7 @@ const collections = {
     admins:'admins',
     shops:'shops',
     products: 'products',
-    productGroups: 'productGroups'
+    productGroups: 'productGroups',
+    categories:'categories'
 }
 export default collections

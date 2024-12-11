@@ -15,6 +15,7 @@ import AdminRouter from './routes/admin.route.js'
 import localizationMiddleware from './middlewares/localization.auth.middleware.js'
 import ProductRouter from "./routes/products.routes.js"
 import ProductGroupsRouter from "./routes/productGroups.routes.js"
+import CartRouter from './routes/cart.route.js'
 dotenv.config()
 
 await mongoose.connect(process.env.MONGO_URL)
@@ -37,10 +38,12 @@ app.post("/api/v1/adminLogin",adminValidateLoginRequest,adminLogin)
 
 app.use("/api/v1/buyer", BuyerRouter)
 app.use("/api/v1/seller", SellerRouter)
-app.use("api/v1/admin",AdminRouter)
+app.use("/api/v1/admin",AdminRouter)
 
 app.use("/api/v1/products", ProductRouter);
 app.use("/api/v1/productgroups", ProductGroupsRouter)
+
+app.use("/api/v1/cart", CartRouter);
 
 app.listen(PORT, (err) => {
     if(err) throw new Error(err)
