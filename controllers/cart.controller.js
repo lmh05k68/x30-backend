@@ -1,4 +1,4 @@
-import ProductGroupModel from "../models/productGroup.model.js";
+import ProductGroupModel from "../models/ProductGroup.js";
 // Controller: Lấy thông tin giỏ hàng
 const getCart = async (req, res) => {
   try {

@@ -2,10 +2,12 @@ import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt";
 import { v2 as cloudinary } from 'cloudinary'
 import dotenv from 'dotenv'
-import { findSeller,findSellerAndUpdate ,createSeller} from '../repositories/seller.repository.js';
-import { findBuyer,findBuyerAndUpdate,createBuyer } from '../repositories/buyer.repository.js';
+import {findSellerAndUpdate ,createSeller} from '../repositories/seller.repository.js';
+import {findBuyerAndUpdate,createBuyer,getBuyers } from '../repositories/buyer.repository.js';
 import BuyerModel from '../models/Buyer.js'
 import SellerModel from '../models/Seller.js'
+import {getSellers} from '../repositories/seller.repository.js'
+import {getAdmins} from '../repositories/admin.repository.js'
 dotenv.config()
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -112,26 +114,44 @@ const adminRegister = async (req, res) => {
     }
   };
 
-  //lấy danh sách tài khoản 
-  const getAccounts = async (req, res) => {
+  //lấy danh sách tài khoản người mua
+  const getBuyerAccounts = async (req, res) => {
     try {
-      // Lấy danh sách người bán
-      const sellers = await findSeller({});
-      
-      // Lấy danh sách người mua
-      const buyers = await findBuyer({});
-      
-      // Trả về kết quả
+      const data = await getBuyers(req.query);
       res.status(200).send({
-        message: "Accounts fetched successfully",
-        data: {
-          sellers,
-          buyers
-        }
+        data
       });
     } catch (error) {
-      res.status(400).send({
-        message: error.message
+      res.status(401).send({
+        message: error.message,
+      });
+    }
+  };
+
+  //lấy danh sách tk người bán
+  const getSellerAccounts = async (req, res) => {
+    try {
+      const data = await getSellers(req.query);
+      res.status(200).send({
+        data
+      });
+    } catch (error) {
+      res.status(401).send({
+        message: error.message,
+      });
+    }
+  };
+
+  //lấy danh sách tài khoản admin
+  const getAdminAccounts = async (req, res) => {
+    try {
+      const data = await getAdmins(req.query);
+      res.status(200).send({
+        data
+      });
+    } catch (error) {
+      res.status(401).send({
+        message: error.message,
       });
     }
   };
@@ -171,7 +191,7 @@ const adminRegister = async (req, res) => {
     }
   };
 
-  //thêm tài khoản người mua/bán
+  //thêm tài khoản 
   const addAccount = async (req, res) => {
     const { type } = req.params; // "buyer" hoặc "seller"
     const data = req.body;
@@ -256,4 +276,4 @@ const adminRegister = async (req, res) => {
     }
   };
   
-  export {adminLogin,adminRegister, adminProfile, adminUpdateProfile,getAccounts,toggleAccountStatus,deleteAccount,updateAccount,addAccount}
+  export {adminLogin,adminRegister, adminProfile, adminUpdateProfile,getBuyerAccounts,getSellerAccounts,getAdminAccounts,toggleAccountStatus,deleteAccount,updateAccount,addAccount}

@@ -3,6 +3,7 @@ import { getValidationError } from "../utils/joi.utils.js";
 export const buyerValidateRegisterRequest = async (req, res, next) => {
   const schema = Joi.object({
     name: Joi.string()
+      .alphanum()
       .min(3)
       .max(255)
       .required()
@@ -26,7 +27,6 @@ export const buyerValidateRegisterRequest = async (req, res, next) => {
           }),
       }),
     phoneNumber: Joi.string()
-      .pattern(new RegExp("/(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/"))
       .required()
       .messages({
         "any.required": req.translate("validation.required", {
@@ -57,11 +57,7 @@ export const buyerValidateRegisterRequest = async (req, res, next) => {
     res.status(400).send(getValidationError(error));
   }
 };
-// const regexEmail = "/^w+@[a-zA-Z_]+?.[a-zA-Z]{2,3}$/";
-// const regexPhone = "/(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/";
-
 export const buyerValidateLoginRequest = async (req, res, next) => {
-
     const schema = Joi.object({
       email: Joi.string()
         .email()
