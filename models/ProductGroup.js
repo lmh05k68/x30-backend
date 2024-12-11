@@ -16,6 +16,7 @@ const productGroupSchema = new mongoose.Schema({
         ref: "products",
       },
   ],
+  categoryIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "categories" }]
 });
 
 const ProductGroupModel = mongoose.model(

@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import collections from "../const/collection.const.js";
 
-const productsSchema = new mongoose.Schema({
+const ImportProductHistorySchema = new mongoose.Schema({
   discount: { type: String, default: 0},
   name: { type: String, required: true },
   image: { type: String},
@@ -19,6 +19,6 @@ const productsSchema = new mongoose.Schema({
   importedQuantity: { type: Number},
 }, {timestamps: true});
 
-const ProductModel = mongoose.model(collections.products, productsSchema);
+const ImportProductHistoryModel = mongoose.model(collections.importProductHistory, ImportProductHistorySchema);
 
-export default ProductModel;
+export default ImportProductHistoryModel;
