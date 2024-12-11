@@ -20,6 +20,7 @@ const productGroupSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
     },
   ],
+  categoryIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "categories" }]
 });
 const ProductGroupModel = mongoose.model(
   collections.productGroups,

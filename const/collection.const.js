@@ -5,6 +5,7 @@ const collections = {
     shops:'shops',
     products: 'products',
     productGroups: 'productGroups',
-    categories:'categories'
+    categories: 'categories',
+    importProductHistory: 'importProductHistory'
 }
 export default collections
