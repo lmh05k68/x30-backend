@@ -57,9 +57,6 @@ export const adminValidateRegisterRequest = async (req, res, next) => {
     res.status(400).send(getValidationError(error));
   }
 };
-// const regexEmail = "/^w+@[a-zA-Z_]+?.[a-zA-Z]{2,3}$/";
-// const regexPhone = "/(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/";
-
 export const adminValidateLoginRequest = async (req, res, next) => {
 
     const schema = Joi.object({

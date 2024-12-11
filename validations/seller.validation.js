@@ -37,7 +37,7 @@ export const sellerValidateRegisterRequest = async (req, res, next) => {
           }),
       }),
     password: Joi.string()
-      .pattern(new RegExp("^[a-zA-Z0-9]{3,30}$"))
+      //.pattern(new RegExp("^[a-zA-Z0-9]{3,30}$"))
       .required()
       .messages({
         "any.required": req.translate("validation.required", {
