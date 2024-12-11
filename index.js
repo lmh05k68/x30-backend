@@ -16,6 +16,7 @@ import localizationMiddleware from './middlewares/localization.auth.middleware.j
 import ProductRouter from "./routes/products.routes.js"
 import ProductGroupsRouter from "./routes/productGroups.routes.js"
 import CartRouter from './routes/cart.route.js'
+import CategoryRouter from "./routes/category.route.js"
 dotenv.config()
 
 await mongoose.connect(process.env.MONGO_URL)
@@ -44,6 +45,8 @@ app.use("/api/v1/products", ProductRouter);
 app.use("/api/v1/productgroups", ProductGroupsRouter)
 
 app.use("/api/v1/cart", CartRouter);
+
+app.use("/api/v1/category", CategoryRouter);
 
 app.listen(PORT, (err) => {
     if(err) throw new Error(err)

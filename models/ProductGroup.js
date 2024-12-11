@@ -20,7 +20,11 @@ const productGroupSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
     },
   ],
-  categoryIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "categories" }]
+  categoryIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "categories" }],
+  priceRange:[{
+    type:Number,
+    max: 2
+  }]
 });
 const ProductGroupModel = mongoose.model(
   collections.productGroups,
