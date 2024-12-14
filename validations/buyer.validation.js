@@ -16,7 +16,7 @@ export const buyerValidateRegisterRequest = async (req, res, next) => {
           }),
       }),
     email: Joi.string()
-      .email(new RegExp("/^w+@[a-zA-Z_]+?.[a-zA-Z]{2,3}$/"))
+      //.email(new RegExp("/^w+@[a-zA-Z_]+?.[a-zA-Z]{2,3}$/"))
       .required()
       .messages({
         "any.required": req.translate("validation.required", {
@@ -37,7 +37,7 @@ export const buyerValidateRegisterRequest = async (req, res, next) => {
           }),
       }),
     password: Joi.string()
-      .pattern(new RegExp("^[a-zA-Z0-9]{3,30}$"))
+      //.pattern(new RegExp("^[a-zA-Z0-9]{3,30}$"))
       .required()
       .messages({
         "any.required": req.translate("validation.required", {

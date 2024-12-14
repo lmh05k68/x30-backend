@@ -8,7 +8,6 @@ import {adminValidateRegisterRequest,adminValidateLoginRequest} from './validati
 import {adminRegister,adminLogin} from './controllers/admin.controller.js'
 import {buyerRegister,buyerLogin} from './controllers/buyer.controller.js'
 import {sellerRegister, sellerLogin} from './controllers/seller.controller.js'
-//import adminAuthMiddleware from './middlewares/admin.auth.middlewares.js'
 import BuyerRouter from './routes/buyer.route.js'
 import SellerRouter from './routes/seller.route.js'
 import AdminRouter from './routes/admin.route.js'
@@ -34,8 +33,6 @@ app.post("/api/v1/sellerLogin",sellerValidateLoginRequest, sellerLogin)
 
 app.post("/api/v1/adminRegister",adminValidateRegisterRequest,adminRegister)
 app.post("/api/v1/adminLogin",adminValidateLoginRequest,adminLogin)
-
-//app.use(adminAuthMiddleware.authentication)
 
 app.use("/api/v1/buyer", BuyerRouter)
 app.use("/api/v1/seller", SellerRouter)
