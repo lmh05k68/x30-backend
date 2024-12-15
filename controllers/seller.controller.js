@@ -2,6 +2,8 @@ import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt";
 import { v2 as cloudinary } from 'cloudinary'
 import dotenv from 'dotenv'
+import ProductModel from "../models/Product.js";
+import ProductGroupModel from "../models/ProductGroup.js";
 dotenv.config()
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -101,4 +103,162 @@ const sellerUpdateProfile = async (req, res) => {
     });
   }
 };
-export {sellerLogin,sellerRegister, sellerProfile, sellerUpdateProfile}
+
+// Thêm sản phẩm mới
+const createProduct = async (req, res) => {
+  const { name, price, inStock, properties, image, discount, pricePerUnit, importedQuantity } = req.body;
+  const shopId = req.currentUser.shopId; // Lấy shopId từ người bán hiện tại
+
+  try {
+      const newProduct = await ProductModel.create({
+          name,
+          price,
+          inStock,
+          properties,
+          image,
+          discount,
+          pricePerUnit,
+          importedQuantity,
+          shopId
+      });
+
+      res.status(201).send({
+          message: "Product created successfully",
+          product: newProduct
+      });
+  } catch (error) {
+      res.status(400).send({
+          message: error.message
+      });
+  }
+};
+// Lấy danh sách toàn bộ sản phẩm của người bán
+const getProducts = async (req, res) => {
+  const shopId = req.currentUser.shopId; // Lấy shopId từ người bán hiện tại
+
+  try {
+      const products = await ProductModel.find({ shopId });
+      res.status(200).send({
+          products
+      });
+  } catch (error) {
+      res.status(400).send({
+          message: error.message
+      });
+  }
+};
+// Lấy thông tin chi tiết một sản phẩm
+const getProductById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+      const product = await ProductModel.findById(id);
+      if (!product) throw new Error("Product not found");
+
+      res.status(200).send({
+          product
+      });
+  } catch (error) {
+      res.status(404).send({
+          message: error.message
+      });
+  }
+};
+// Cập nhật sản phẩm
+const updateProduct = async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+
+  try {
+      const updatedProduct = await ProductModel.findByIdAndUpdate(id, updates, { new: true });
+      if (!updatedProduct) throw new Error("Product not found");
+
+      res.status(200).send({
+          message: "Product updated successfully",
+          product: updatedProduct
+      });
+  } catch (error) {
+      res.status(400).send({
+          message: error.message
+      });
+  }
+};
+// Thêm product group mới
+const createProductGroup = async (req, res) => {
+  const { averageRate, brand, description, image, title, productIds, categoryIds } = req.body;
+  const shopId = req.currentUser.shopId; // Lấy shopId từ người bán hiện tại
+
+  try {
+      const newProductGroup = await ProductGroupModel.create({
+          averageRate,
+          brand,
+          description,
+          image,
+          title,
+          shopId,
+          productIds,
+          categoryIds
+      });
+
+      res.status(201).send({
+          message: "Product group created successfully",
+          productGroup: newProductGroup
+      });
+  } catch (error) {
+      res.status(400).send({
+          message: error.message
+      });
+  }
+};
+// Lấy danh sách toàn bộ product groups của người bán
+const getProductGroups = async (req, res) => {
+  const shopId = req.currentUser.shopId; // Lấy shopId từ người bán hiện tại
+
+  try {
+      const productGroups = await ProductGroupModel.find({ shopId });
+      res.status(200).send({
+          productGroups
+      });
+  } catch (error) {
+      res.status(400).send({
+          message: error.message
+      });
+  }
+};
+// Lấy thông tin chi tiết một product group
+const getProductGroupById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+      const productGroup = await ProductGroupModel.findById(id);
+      if (!productGroup) throw new Error("Product group not found");
+
+      res.status(200).send({
+          productGroup
+      });
+  } catch (error) {
+      res.status(404).send({
+          message: error.message
+      });
+  }
+};
+// Cập nhật một product group
+const updateProductGroup = async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+
+  try {
+      const updatedProductGroup = await ProductGroupModel.findByIdAndUpdate(id, updates, { new: true });
+      if (!updatedProductGroup) throw new Error("Product group not found");
+
+      res.status(200).send({
+          message: "Product group updated successfully",
+          productGroup: updatedProductGroup
+      });
+  } catch (error) {
+      res.status(400).send({
+          message: error.message
+      });
+  }
+};
+export {sellerLogin,sellerRegister, sellerProfile, sellerUpdateProfile,createProduct, getProducts, getProductById, updateProduct,createProductGroup, getProductGroups, getProductGroupById, updateProductGroup }
