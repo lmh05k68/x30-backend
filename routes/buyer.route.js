@@ -25,16 +25,8 @@ BuyerRouter.patch(
   buyerUpdateProfile
 );
 
-BuyerRouter.get(
-  "/product-groups",
-  buyerAuthMiddleware.authentication,
-  getProductGroups
-);
+BuyerRouter.get("/product-groups", getProductGroups);
 
-BuyerRouter.get(
-  "/product-groups/:id",
-  buyerAuthMiddleware.authentication,
-  getProductGroup
-);
+BuyerRouter.get("/product-groups/:id", getProductGroup);
 
 export default BuyerRouter;
