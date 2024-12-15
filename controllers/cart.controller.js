@@ -1,122 +1,96 @@
-import ProductGroupModel from "../models/ProductGroup.js";
-import CartModel from '../models/Cart.js'
-import BuyerModel from '../models/Buyer.js'
+import ProductModel from "../models/Product.js";
+import CartModel from "../models/Cart.js";
+import BuyerModel from "../models/Buyer.js";
 // Controller: Lấy thông tin giỏ hàng
 const getCart = async (req, res) => {
   try {
-    // Lấy buyerId từ query hoặc token (giả sử trong query ở đây)
     const { buyerId } = req.query;
     console.log("BuyerId received:", buyerId);
-
     if (!buyerId) {
       return res.status(400).json({ error: "BuyerId is required" });
     }
-    
-    // Tìm giỏ hàng của buyer trong CartModel
     const cartItems = await CartModel.find({ buyerId })
-      .populate("productGroupId", "title brand image description averageRate categoryIds")  // Populate thông tin sản phẩm
-      .populate("productGroupId.categoryIds", "name"); // Populate thông tin danh mục
-    
-    // Nếu không có sản phẩm trong giỏ hàng
+      .populate("productId", "name image price discount inStock properties"); // Populate thông tin sản phẩm
     if (!cartItems || cartItems.length === 0) {
       return res.status(200).json({ message: "Cart is empty", cart: [] });
     }
-
-    // Lấy thông tin chi tiết giỏ hàng từ cartItems và thêm số lượng vào
     const cartDetails = cartItems.map((item) => {
-      const group = item.productGroupId;
+      const product = item.productId;
       return {
-        id: group._id,
-        title: group.title,
-        brand: group.brand,
-        image: group.image,
-        description: group.description,
-        averageRate: group.averageRate,
-        categories: group.categoryIds.map((category) => category.name), // Lấy tên danh mục
-        quantity: item.quantity, // Thêm số lượng vào kết quả
+        id: product._id,
+        name: product.name,
+        image: product.image,
+        price: product.price,
+        discount: product.discount,
+        inStock: product.inStock,
+        totalSold: product.properties?.totalSold || 0, // Lấy tổng sản phẩm đã bán (nếu có)
+        quantity: item.quantity,
       };
     });
-
-    // Trả kết quả giỏ hàng
     res.status(200).json({ cart: cartDetails });
   } catch (error) {
     console.error("Error fetching cart:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-
 // Thêm sản phẩm vào giỏ hàng
 const addToCart = async (req, res) => {
   try {
-    const { buyerId, productGroupId, quantity } = req.body;
+    const { buyerId, productId, quantity } = req.body;
 
-    // Kiểm tra input đầu vào
-    if (!buyerId || !productGroupId) {
-      return res.status(400).json({ error: "BuyerId và ProductGroupId là bắt buộc" });
+    if (!buyerId || !productId) {
+      return res.status(400).json({ error: "BuyerId và ProductId là bắt buộc" });
     }
 
-    // Kiểm tra buyerId có hợp lệ không
     const buyer = await BuyerModel.findById(buyerId);
     if (!buyer) {
       return res.status(404).json({ error: "Người mua không tồn tại" });
     }
 
-    // Kiểm tra sản phẩm có tồn tại trong cơ sở dữ liệu hay không
-    const productGroup = await ProductGroupModel.findById(productGroupId);
-    if (!productGroup) {
-      return res.status(404).json({ error: "Nhóm sản phẩm không tồn tại" });
+    const product = await ProductModel.findById(productId);
+    if (!product) {
+      return res.status(404).json({ error: "Sản phẩm không tồn tại" });
     }
 
-    // Kiểm tra sản phẩm đã có trong giỏ hàng của người mua chưa
-    const existingCart = await CartModel.findOne({ buyerId, productGroupId });
+    const existingCart = await CartModel.findOne({ buyerId, productId });
     if (existingCart) {
       return res.status(400).json({ message: "Sản phẩm đã có trong giỏ hàng" });
     }
 
-    // Thêm sản phẩm vào giỏ hàng (thêm số lượng nếu có)
     const newCartItem = new CartModel({
       buyerId,
-      productGroupId,
-      quantity: quantity || 1, // Nếu không có quantity thì mặc định là 1
+      productId,
+      quantity: quantity || 1,
     });
 
     await newCartItem.save();
 
     res.status(200).json({ message: "Thêm sản phẩm vào giỏ hàng thành công" });
   } catch (error) {
-    console.error("Lỗi khi thêm vào giỏ hàng:", error); // Log lỗi chi tiết
+    console.error("Lỗi khi thêm vào giỏ hàng:", error);
     res.status(500).json({ error: "Lỗi máy chủ nội bộ" });
   }
 };
-
+// Cập nhật số lượng sản phẩm trong giỏ hàng
 const updateQuantity = async (req, res) => {
   try {
-    const { buyerId, productGroupId, quantity } = req.body;
+    const { buyerId, productId, quantity } = req.body;
 
-    if (!buyerId || !productGroupId || quantity === undefined) {
-      return res.status(400).json({ error: "BuyerId, ProductGroupId, and Quantity are required" });
+    if (!buyerId || !productId || quantity === undefined) {
+      return res.status(400).json({ error: "BuyerId, ProductId, and Quantity are required" });
     }
 
     if (quantity <= 0) {
       return res.status(400).json({ error: "Quantity must be greater than 0" });
     }
 
-    // Kiểm tra nếu sản phẩm tồn tại trong giỏ hàng của người mua
-    const cartItem = await CartModel.findOne({
-      buyerId: buyerId,  // Sửa lại đây cho phù hợp
-      productGroupId: productGroupId,
-    });
-
+    const cartItem = await CartModel.findOne({ buyerId, productId });
     if (!cartItem) {
       return res.status(404).json({ error: "Product not found in cart" });
     }
 
-    // Cập nhật số lượng sản phẩm trong giỏ hàng
-    await CartModel.updateOne(
-      { _id: cartItem._id }, // Cập nhật dựa trên ID của sản phẩm trong giỏ hàng
-      { $set: { quantity } }  // Cập nhật số lượng
-    );
+    cartItem.quantity = quantity;
+    await cartItem.save();
 
     res.status(200).json({ message: "Quantity updated successfully" });
   } catch (error) {
@@ -124,30 +98,21 @@ const updateQuantity = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
+// Xóa sản phẩm khỏi giỏ hàng
 const removeFromCart = async (req, res) => {
   try {
-    const { buyerId, productGroupId } = req.body;
+    const { buyerId, productId } = req.body;
 
-    if (!buyerId || !productGroupId) {
-      return res.status(400).json({ error: "BuyerId and ProductGroupId are required" });
+    if (!buyerId || !productId) {
+      return res.status(400).json({ error: "BuyerId and ProductId are required" });
     }
 
-    // Kiểm tra nếu sản phẩm có trong giỏ hàng của người mua
-    const cartItem = await CartModel.findOne({
-      buyerId: buyerId,
-      productGroupId: productGroupId,
-    });
-
+    const cartItem = await CartModel.findOne({ buyerId, productId });
     if (!cartItem) {
       return res.status(404).json({ error: "Product not found in cart" });
     }
 
-    // Xóa sản phẩm khỏi giỏ hàng
-    await CartModel.deleteOne({
-      buyerId: buyerId,
-      productGroupId: productGroupId,
-    });
+    await CartModel.deleteOne({ _id: cartItem._id });
 
     res.status(200).json({ message: "Product removed from cart successfully" });
   } catch (error) {
@@ -155,4 +120,4 @@ const removeFromCart = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-export { getCart,addToCart, updateQuantity,removeFromCart };
+export { getCart, addToCart, updateQuantity, removeFromCart };
