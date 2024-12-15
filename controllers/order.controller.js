@@ -65,4 +65,31 @@ const placeOrder = async (req, res) => {
   }
 };
 
-export { placeOrder };
+const getOrders = async (req, res) => {
+  try {
+    const { buyerId } = req.query;
+
+    // Kiểm tra buyerId có được truyền không
+    if (!buyerId) {
+      return res.status(400).json({ error: "BuyerId is required" });
+    }
+
+    // Kiểm tra người mua có tồn tại không
+    const buyer = await BuyerModel.findById(buyerId);
+    if (!buyer) {
+      return res.status(404).json({ error: "Buyer not found" });
+    }
+
+    // Lấy danh sách đơn hàng theo buyerId
+    const orders = await OrderModel.find({ buyerId })
+      .populate("products.productId", "name price discount")
+      .sort({ createdAt: -1 }); // Sắp xếp đơn hàng mới nhất trước
+
+    // Trả về danh sách đơn hàng
+    res.status(200).json({ orders });
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+export { placeOrder, getOrders  };
