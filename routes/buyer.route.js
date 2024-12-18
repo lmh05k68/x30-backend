@@ -12,6 +12,7 @@ import {getCart,addToCart,updateQuantity,removeFromCart} from "../controllers/ca
 import {placeOrder, getOrders} from '../controllers/order.controller.js'
 // const storage = multer.memoryStorage();
 // const upload = multer({ storage: storage });
+import { buyerForgotPassword, buyerResetPassword } from "../controllers/buyer.controller.js";
 const BuyerRouter = Router();
 
 BuyerRouter.get(
@@ -19,20 +20,19 @@ BuyerRouter.get(
   buyerAuthMiddleware.authentication,
   buyerProfile
 );
-
 BuyerRouter.patch(
   "/buyerProfile",
   buyerAuthMiddleware.authentication,
   validateUpdateBuyerRequest,
   buyerUpdateProfile
 );
-
 BuyerRouter.get("/product-groups", getProductGroups);
-
 BuyerRouter.get("/product-groups/:id", getProductGroup);
 BuyerRouter.get("/get-cart", getCart);
 BuyerRouter.post("/add-cart", addToCart);
 BuyerRouter.delete('/delete-cart',removeFromCart)
 BuyerRouter.post('/order',placeOrder)
 BuyerRouter.get('/get-order',getOrders)
+BuyerRouter.post('/forgot-password',buyerForgotPassword)
+BuyerRouter.post('/reset-password',buyerResetPassword )
 export default BuyerRouter;

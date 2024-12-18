@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import crypto from 'crypto'
 import bcrypt from "bcrypt";
 import { v2 as cloudinary } from "cloudinary";
 import dotenv from "dotenv";
@@ -8,7 +9,7 @@ cloudinary.config({
   api_key: process.env.CLOUD_API_KEY,
   api_secret: process.env.CLOUD_SECRET_KEY,
 });
-
+import nodemailer from "nodemailer";
 import {
   findBuyerByEmail,
   createBuyer,
@@ -21,7 +22,19 @@ import {
   getProductGroupById,
 } from "../repositories/productGroups.repository.js";
 import { getProductsByIds } from "../repositories/products.repository.js";
-
+import BuyerModel from '../models/Buyer.js'
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465, // Cổng bảo mật SSL
+  secure: true, 
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS,
+  },
+  debug: true, // Hiển thị toàn bộ log debug
+  logger: true,
+});
 //người mua đăng kí
 export const buyerRegister = async (req, res) => {
   const { name, email, password, phoneNumber } = req.body;
@@ -154,5 +167,74 @@ export const getProductGroup = async (req, res) => {
     });
   } catch (e) {
     return res.status(404).send({ message: e.message });
+  }
+};
+// API quên mật khẩu
+export const buyerForgotPassword = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await BuyerModel.findOne({ email });
+    if (!user) throw new Error(req.translate("user.emailNotFound"));
+
+    // Tạo token xác thực đặt lại mật khẩu
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetPasswordToken = jwt.sign(
+      { resetToken, email },
+      process.env.RESET_TK_KEY,
+      { expiresIn: "15m" } // Token hết hạn sau 15 phút
+    );
+
+    // Lưu token vào database
+    user.resetToken = resetToken;
+    user.tokenExpiration = Date.now() + 15 * 60 * 1000; // 15 phút
+    await user.save();
+
+    // Gửi email
+    const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetPasswordToken}`;
+    try {
+      const result = await transporter.sendMail({
+        from: process.env.GMAIL_USER,
+        to: email,
+        subject: "Password Reset Request",
+        html: `<p>Chào ${user.name},</p>
+               <p>Bạn đã yêu cầu đặt lại mật khẩu. Nhấn vào đường dẫn dưới đây để tiếp tục:</p>
+               <a href="${resetUrl}">Đặt lại mật khẩu</a>
+               <p>Đường dẫn sẽ hết hạn sau 15 phút.</p>`,
+      });
+      console.log("Email sent successfully:", result);
+    } catch (error) {
+      console.error("Error occurred while sending email:", error); // Log lỗi cụ thể
+    }
+
+    res.status(200).send({ message: req.translate("user.resetEmailSent") });
+  } catch (error) {
+    res.status(400).send({ message: error.message });
+  }
+};
+
+// API đặt lại mật khẩu
+export const buyerResetPassword = async (req, res) => {
+  const { token, password } = req.body;
+  try {
+    const decoded = jwt.verify(token, process.env.RESET_TK_KEY);
+    const { resetToken, email } = decoded;
+
+    const user = await BuyerModel.findOne({ email, resetToken });
+    if (!user || user.tokenExpiration < Date.now())
+      throw new Error(req.translate("user.invalidToken"));
+
+    // Mã hóa mật khẩu mới
+    const salt = bcrypt.genSaltSync(+process.env.SALT_ROUNDS);
+    const hash = bcrypt.hashSync(password, salt);
+
+    // Cập nhật mật khẩu và xóa token
+    user.password = hash;
+    user.resetToken = null;
+    user.tokenExpiration = null;
+    await user.save();
+
+    res.status(200).send({ message: req.translate("user.passwordUpdated") });
+  } catch (error) {
+    res.status(400).send({ message: error.message });
   }
 };
