@@ -40,7 +40,9 @@ const buyerSchema = new mongoose.Schema({
             isDefault: Boolean
         }
     ],
-    cart:[]
+    cart:[],
+    resetToken: { type: String, default: null },
+    tokenExpiration: { type: Date, default: null }
 })
 const BuyerModel = mongoose.model(collections.buyers,buyerSchema)
 export default BuyerModel
