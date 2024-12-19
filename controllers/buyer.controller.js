@@ -29,8 +29,8 @@ const transporter = nodemailer.createTransport({
   port: 465, // Cổng bảo mật SSL
   secure: true, 
   auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS,
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
   debug: true, // Hiển thị toàn bộ log debug
   logger: true,
@@ -203,8 +203,12 @@ export const buyerForgotPassword = async (req, res) => {
       });
       console.log("Email sent successfully:", result);
     } catch (error) {
-      console.error("Error occurred while sending email:", error); // Log lỗi cụ thể
+      console.error("Error occurred while sending email:", error);
     }
+
+    // Log token ra console
+    console.log("Reset Password Token (JWT):", resetPasswordToken);
+    console.log("Reset Token (DB):", resetToken);
 
     res.status(200).send({ message: req.translate("user.resetEmailSent") });
   } catch (error) {
