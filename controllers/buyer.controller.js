@@ -226,23 +226,26 @@ export const buyerResetPassword = async (req, res) => {
     if (!user || user.tokenExpiration < Date.now())
       throw new Error(req.translate("user.invalidToken"));
 
+    console.log("Reset Token in DB:", user.resetToken);
+    console.log("Reset Token from JWT:", resetToken);
+
     // Mã hóa mật khẩu mới
     const salt = bcrypt.genSaltSync(+process.env.SALT_ROUNDS);
     const hash = bcrypt.hashSync(password, salt);
 
+    console.log("Old Hashed Password:", user.password); // Log mật khẩu cũ trước khi cập nhật
+    console.log("New Hashed Password:", hash); // Log mật khẩu mới được hash
+
     // Cập nhật mật khẩu và xóa token
-    user.password = hash;
+    user.set("password", hash); // Đảm bảo Mongoose theo dõi thay đổi
     user.resetToken = null;
     user.tokenExpiration = null;
 
-    // Log trạng thái trước khi lưu
-    console.log("User before save:", user);
-
-    // Lưu thay đổi
     await user.save();
 
-    // Log sau khi lưu
-    console.log("User updated successfully:", user);
+    // Lấy lại user từ database để kiểm tra mật khẩu đã được cập nhật
+    const updatedUser = await BuyerModel.findById(user._id);
+    console.log("Updated Password in DB:", updatedUser.password); // Log mật khẩu sau khi lưu
 
     res.status(200).send({ message: req.translate("user.passwordUpdated") });
   } catch (error) {
