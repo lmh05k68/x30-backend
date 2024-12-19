@@ -215,8 +215,7 @@ export const buyerForgotPassword = async (req, res) => {
     res.status(400).send({ message: error.message });
   }
 };
-
-// API đặt lại mật khẩu
+//buyer reset password
 export const buyerResetPassword = async (req, res) => {
   const { token, password } = req.body;
   try {
@@ -235,10 +234,19 @@ export const buyerResetPassword = async (req, res) => {
     user.password = hash;
     user.resetToken = null;
     user.tokenExpiration = null;
+
+    // Log trạng thái trước khi lưu
+    console.log("User before save:", user);
+
+    // Lưu thay đổi
     await user.save();
+
+    // Log sau khi lưu
+    console.log("User updated successfully:", user);
 
     res.status(200).send({ message: req.translate("user.passwordUpdated") });
   } catch (error) {
+    console.error("Error resetting password:", error);
     res.status(400).send({ message: error.message });
   }
 };

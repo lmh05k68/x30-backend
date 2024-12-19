@@ -40,7 +40,6 @@ const buyerSchema = new mongoose.Schema({
             isDefault: Boolean
         }
     ],
-    cart:[],
     resetToken: { type: String, default: null },
     tokenExpiration: { type: Date, default: null }
 })
