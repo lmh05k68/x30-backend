@@ -5,7 +5,7 @@ import {Router} from 'express'
 import { sellerProfile, sellerUpdateProfile} from "../controllers/seller.controller.js";
 import {validateUpdateSellerRequest} from '../validations/seller.validation.js'
 import sellerAuthMiddleware from '../middlewares/seller.auth.middleware.js';
-import { createProduct, getProducts, getProductById, updateProduct,createProductGroup, getProductGroups, getProductGroupById, updateProductGroup} from '../controllers/seller.controller.js'
+import { createProduct, getProducts, getProductById, updateProduct,createProductGroup, getProductGroups, getProductGroupById, updateProductGroup, sellerForgotPassword,sellerResetPassword,sellerLogin,sellerRegister} from '../controllers/seller.controller.js'
 const SellerRouter = Router()
 SellerRouter.get('/sellerProfile', sellerAuthMiddleware.authentication,sellerProfile)
 SellerRouter.patch('/sellerProfile', sellerAuthMiddleware.authentication, validateUpdateSellerRequest, sellerUpdateProfile)
@@ -19,4 +19,7 @@ SellerRouter.post('/product', sellerAuthMiddleware.authentication,createProduct)
 SellerRouter.patch('/product/:id', sellerAuthMiddleware.authentication,updateProduct);
 SellerRouter.get('/product', sellerAuthMiddleware.authentication,getProducts);
 SellerRouter.get('/product/:id', sellerAuthMiddleware.authentication,getProductById);
+
+SellerRouter.post('/forgot-password',sellerForgotPassword)
+SellerRouter.post('/reset-password',sellerResetPassword)
 export default SellerRouter

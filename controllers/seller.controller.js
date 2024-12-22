@@ -1,19 +1,28 @@
 import jwt from "jsonwebtoken"
+import nodemailer from 'nodemailer';
 import bcrypt from "bcrypt";
 import { v2 as cloudinary } from 'cloudinary'
 import dotenv from 'dotenv'
 import ProductModel from "../models/Product.js";
 import ProductGroupModel from "../models/ProductGroup.js";
+import crypto from 'crypto'
 dotenv.config()
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.CLOUD_API_KEY,
   api_secret: process.env.CLOUD_SECRET_KEY,
 });
-
+import SellerModel from '../models/Seller.js'
 import { findSellerByEmail, createSeller, findSeller, findSellerAndUpdate} from '../repositories/seller.repository.js'
 import { createShop } from "../repositories/shop.repository.js";
 import { userStatus } from "../const/user.const.js";
+const transporter = nodemailer.createTransport({
+  service: process.env.EMAIL_SERVICE,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 //người mua đăng kí
 const sellerRegister = async (req, res) => {
     const { name, email, password, phone } = req.body;
@@ -259,6 +268,89 @@ const updateProductGroup = async (req, res) => {
       res.status(400).send({
           message: error.message
       });
+  }
+};
+export const sellerForgotPassword = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await SellerModel.findOne({ email });
+    if (!user) throw new Error(req.translate("user.emailNotFound"));
+
+    // Tạo token xác thực đặt lại mật khẩu
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetPasswordToken = jwt.sign(
+      { resetToken, email },
+      process.env.RESET_TK_KEY,
+      { expiresIn: "15m" } // Token hết hạn sau 15 phút
+    );
+
+    // Lưu token vào database
+    user.resetToken = resetToken;
+    user.tokenExpiration = Date.now() + 15 * 60 * 1000; // 15 phút
+    await user.save();
+
+    // Gửi email
+    const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetPasswordToken}`;
+    try {
+      const result = await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "Password Reset Request",
+        html: `<p>Chào ${user.name},</p>
+               <p>Bạn đã yêu cầu đặt lại mật khẩu. Nhấn vào đường dẫn dưới đây để tiếp tục:</p>
+               <a href="${resetUrl}">Đặt lại mật khẩu</a>
+               <p>Đường dẫn sẽ hết hạn sau 15 phút.</p>`,
+      });
+      console.log("Email sent successfully:", result);
+    } catch (error) {
+      console.error("Error occurred while sending email:", error);
+    }
+
+    // Log token ra console
+    console.log("Reset Password Token (JWT):", resetPasswordToken);
+    console.log("Reset Token (DB):", resetToken);
+
+    res.status(200).send({ message: req.translate("user.resetEmailSent") });
+  } catch (error) {
+    res.status(400).send({ message: error.message });
+  }
+};
+//seller reset password
+export const sellerResetPassword = async (req, res) => {
+  const { token, password } = req.body;
+  try {
+    const decoded = jwt.verify(token, process.env.RESET_TK_KEY);
+    const { resetToken, email } = decoded;
+
+    const user = await SellerModel.findOne({ email, resetToken });
+    if (!user || user.tokenExpiration < Date.now())
+      throw new Error(req.translate("user.invalidToken"));
+
+    console.log("Reset Token in DB:", user.resetToken);
+    console.log("Reset Token from JWT:", resetToken);
+
+    // Mã hóa mật khẩu mới
+    const salt = bcrypt.genSaltSync(+process.env.SALT_ROUNDS);
+    const hash = bcrypt.hashSync(password, salt);
+
+    console.log("Old Hashed Password:", user.password); // Log mật khẩu cũ trước khi cập nhật
+    console.log("New Hashed Password:", hash); // Log mật khẩu mới được hash
+
+    // Cập nhật mật khẩu và xóa token
+    user.set("password", hash); // Đảm bảo Mongoose theo dõi thay đổi
+    user.resetToken = null;
+    user.tokenExpiration = null;
+
+    await user.save();
+
+    // Lấy lại user từ database để kiểm tra mật khẩu đã được cập nhật
+    const updatedUser = await SellerModel.findById(user._id);
+    console.log("Updated Password in DB:", updatedUser.password); // Log mật khẩu sau khi lưu
+
+    res.status(200).send({ message: req.translate("user.passwordUpdated") });
+  } catch (error) {
+    console.error("Error resetting password:", error);
+    res.status(400).send({ message: error.message });
   }
 };
 export {sellerLogin,sellerRegister, sellerProfile, sellerUpdateProfile,createProduct, getProducts, getProductById, updateProduct,createProductGroup, getProductGroups, getProductGroupById, updateProductGroup }
