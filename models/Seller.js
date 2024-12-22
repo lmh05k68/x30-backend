@@ -29,7 +29,9 @@ const sellerSchema = new mongoose.Schema({
     },
     shopId: {
         type: mongoose.Schema.Types.ObjectId,
-    }
+    },
+    resetToken: { type: String, default: null },
+    tokenExpiration: { type: Date, default: null }
 })
 const SellerModel = mongoose.model(collections.sellers,sellerSchema)
 export default SellerModel

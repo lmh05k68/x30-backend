@@ -193,7 +193,7 @@ export const buyerForgotPassword = async (req, res) => {
     const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetPasswordToken}`;
     try {
       const result = await transporter.sendMail({
-        from: process.env.GMAIL_USER,
+        from: process.env.EMAIL_USER,
         to: email,
         subject: "Password Reset Request",
         html: `<p>Chào ${user.name},</p>
