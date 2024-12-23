@@ -65,42 +65,99 @@ export const buyerRegister = async (req, res) => {
 };
 
 export const buyerLogin = async (req, res) => {
-  const { email, password } = req.body;
   try {
-    const user = await findBuyer({ email });
-    console.log("User found:", user); // Thêm log
+    const { email, password } = req.body;
 
-    if (!user) throw new Error(req.translate("user.wrong"));
+    if (!email || !password) {
+      return res.status(400).send({
+        message: req.translate("validation.required", {
+          field: req.translate("user.credentials"),
+        }),
+      });
+    }
 
-    const checkPassword = bcrypt.compareSync(
-      password.toString(),
-      user.password
-    );
-    console.log("Password match:", checkPassword); // Thêm log
+    // Tìm người mua dựa trên email
+    const buyer = await BuyerModel.findOne({ email });
 
-    if (!checkPassword) throw new Error(req.translate("user.wrong"));
+    if (!buyer) {
+      return res.status(404).send({
+        message: req.translate("error.notFound", {
+          field: req.translate("user.buyer"),
+        }),
+      });
+    }
 
-    if (user.status == userStatus.inactive)
-      throw new Error(req.translate("user.banned"));
+    // Kiểm tra mật khẩu
+    const isPasswordValid = await bcrypt.compare(password, buyer.password);
+    if (!isPasswordValid) {
+      return res.status(401).send({
+        message: req.translate("error.invalidCredentials"),
+      });
+    }
 
-    const { _id } = user;
-    const accessToken = jwt.sign({ _id }, process.env.ACCESS_TK_KEY);
-    const refreshToken = jwt.sign({ _id }, process.env.REFRESH_TK_KEY);
+    // Tạo token đăng nhập
+    const token = jwt.sign({ id: buyer._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
 
-    res.status(201).send({
-      message: "login success",
-      data: {
-        accessToken,
-        refreshToken,
-      },
+    // Cập nhật trạng thái và lưu token
+    await BuyerModel.findByIdAndUpdate(buyer._id, {
+      resetToken: token,
+      tokenExpiration: Date.now() + 3600000, // 1 giờ
+      status: userStatus.active,
+    });
+
+    res.status(200).send({
+      message: req.translate("success.login"),
+      token,
     });
   } catch (error) {
-    res.status(401).send({
-      message: error.message,
+    console.error(error);
+    res.status(500).send({
+      message: req.translate("error.server"),
     });
   }
 };
+//log out 
+export const logoutBuyer = async (req, res) => {
+  try {
+    const { buyerId } = req.body; // Lấy buyerId từ body request
 
+    if (!buyerId) {
+      return res.status(400).send({
+        message: req.translate("validation.required", {
+          field: req.translate("user.buyerId"),
+        }),
+      });
+    }
+
+    // Cập nhật trạng thái và xóa token
+    const buyer = await BuyerModel.findByIdAndUpdate(
+      buyerId,
+      { resetToken: null, tokenExpiration: null, status: userStatus.inactive },
+      { new: true }
+    );
+
+    if (!buyer) {
+      return res.status(404).send({
+        message: req.translate("error.notFound", {
+          field: req.translate("user.buyer"),
+        }),
+      });
+    }
+
+    res.status(200).send({
+      message: req.translate("success.logout", {
+        field: req.translate("user.buyer"),
+      }),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({
+      message: req.translate("error.server"),
+    });
+  }
+};
 //profile người mua
 export const buyerProfile = async (req, res) => {
   try {
@@ -209,7 +266,6 @@ export const buyerForgotPassword = async (req, res) => {
     // Log token ra console
     console.log("Reset Password Token (JWT):", resetPasswordToken);
     console.log("Reset Token (DB):", resetToken);
-
     res.status(200).send({ message: req.translate("user.resetEmailSent") });
   } catch (error) {
     res.status(400).send({ message: error.message });

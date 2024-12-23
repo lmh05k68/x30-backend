@@ -12,10 +12,11 @@ import {getCart,addToCart,updateQuantity,removeFromCart} from "../controllers/ca
 import {placeOrder, getOrders} from '../controllers/order.controller.js'
 // const storage = multer.memoryStorage();
 // const upload = multer({ storage: storage });
-import { buyerForgotPassword, buyerResetPassword,buyerLogin,buyerRegister } from "../controllers/buyer.controller.js";
+import { buyerForgotPassword, buyerResetPassword,buyerLogin,buyerRegister,logoutBuyer } from "../controllers/buyer.controller.js";
 const BuyerRouter = Router();
 BuyerRouter.post('/login',buyerLogin)
 BuyerRouter.post('/register',buyerRegister)
+BuyerRouter.post('/logout',logoutBuyer)
 BuyerRouter.get(
   "/buyerProfile",
   buyerAuthMiddleware.authentication,
