@@ -50,32 +50,99 @@ const sellerRegister = async (req, res) => {
     }
 };
 //người mua đăng nhập
-const sellerLogin = async (req, res) => {
+export const sellerLogin = async (req, res) => {
+  try {
     const { email, password } = req.body;
-    try {
-      const user = await findSeller({ email });
-      if (!user) throw new Error(req.translate('user.wrong'));
-      const checkPassword = bcrypt.compareSync(
-        password.toString(),
-        user.password
-      );
-      if (!checkPassword) throw new Error(req.translate('user.wrong'));
-      if(user.status == userStatus.inactive) throw new Error(req.translate('user.banned'))
-      const { _id } = user;
-      const accessToken = jwt.sign({ _id }, process.env.ACCESS_TK_KEY);
-      const refreshToken = jwt.sign({ _id }, process.env.REFRESH_TK_KEY);
-      res.status(201).send({
-        message: "login success",
-        data: {
-          accessToken,
-          refreshToken
-        },
-      });
-    } catch (error) {
-      res.status(401).send({
-        message: error.message,
+
+    if (!email || !password) {
+      return res.status(400).send({
+        message: req.translate("validation.required", {
+          field: req.translate("user.credentials"),
+        }),
       });
     }
+
+    // Tìm người mua dựa trên email
+    const seller = await SellerModel.findOne({ email });
+
+    if (!seller) {
+      return res.status(404).send({
+        message: req.translate("error.notFound", {
+          field: req.translate("user.buyer"),
+        }),
+      });
+    }
+
+    // Kiểm tra mật khẩu
+    const isPasswordValid = await bcrypt.compare(password, seller.password);
+    if (!isPasswordValid) {
+      return res.status(401).send({
+        message: req.translate("error.invalidCredentials"),
+      });
+    }
+
+    // Tạo token đăng nhập
+    const token = jwt.sign({ id: buyer._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    // Cập nhật trạng thái và lưu token
+    await SellerModel.findByIdAndUpdate(seller._id, {
+      resetToken: token,
+      tokenExpiration: Date.now() + 3600000, // 1 giờ
+      status: userStatus.active,
+    });
+
+    res.status(200).send({
+      message: req.translate("success.login"),
+      token,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({
+      message: req.translate("error.server"),
+    });
+  }
+};
+//log out 
+export const logoutSeller = async (req, res) => {
+  try {
+    const { sellerId } = req.body; // Lấy sellerId từ body request
+
+    if (!sellerId) {
+      return res.status(400).send({
+        message: req.translate("validation.required", {
+          field: req.translate("user.sellerId"),
+        }),
+      });
+    }
+
+    // Cập nhật trạng thái và xóa token
+    const seller = await SellerModel.findByIdAndUpdate(
+      sellerId,
+      { resetToken: null, tokenExpiration: null, status: userStatus.inactive },
+      { new: true }
+    );
+
+    if (!seller) {
+      return res.status(404).send({
+        message: req.translate("error.notFound", {
+          field: req.translate("user.seller"),
+        }),
+      });
+    }
+
+    res.status(200).send({
+      message: req.translate("success.logout", {
+        field: req.translate("user.seller"),
+      }),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({
+      message: req.translate("error.server"),
+    });
+  }
 };
 //profile người mua
 const sellerProfile = async (req, res) => {
@@ -353,4 +420,4 @@ export const sellerResetPassword = async (req, res) => {
     res.status(400).send({ message: error.message });
   }
 };
-export {sellerLogin,sellerRegister, sellerProfile, sellerUpdateProfile,createProduct, getProducts, getProductById, updateProduct,createProductGroup, getProductGroups, getProductGroupById, updateProductGroup }
+export {sellerRegister, sellerProfile, sellerUpdateProfile,createProduct, getProducts, getProductById, updateProduct,createProductGroup, getProductGroups, getProductGroupById, updateProductGroup }
