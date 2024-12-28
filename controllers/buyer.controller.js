@@ -67,7 +67,6 @@ export const buyerRegister = async (req, res) => {
 export const buyerLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     if (!email || !password) {
       return res.status(400).send({
         message: req.translate("validation.required", {
@@ -75,15 +74,12 @@ export const buyerLogin = async (req, res) => {
         }),
       });
     }
-
     // Tìm người mua dựa trên email
     const buyer = await BuyerModel.findOne({ email });
 
     if (!buyer) {
       return res.status(404).send({
-        message: req.translate("error.notFound", {
-          field: req.translate("user.buyer"),
-        }),
+        message:"Mật khẩu hoặc email sai"
       });
     }
 
@@ -96,25 +92,23 @@ export const buyerLogin = async (req, res) => {
     }
 
     // Tạo token đăng nhập
-    const token = jwt.sign({ id: buyer._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign({ id: buyer._id }, process.env.ACCESS_TK_KEY);
 
     // Cập nhật trạng thái và lưu token
-    await BuyerModel.findByIdAndUpdate(buyer._id, {
-      resetToken: token,
-      tokenExpiration: Date.now() + 3600000, // 1 giờ
-      status: userStatus.active,
-    });
+    // await BuyerModel.findByIdAndUpdate(buyer._id, {
+    //   resetToken: token,
+    //   tokenExpiration: Date.now() + 3600000, // 1 giờ
+    //   status: userStatus.active,
+    // });
 
-    res.status(200).send({
-      message: req.translate("success.login"),
+    res.status(201).send({
+      message:"Đăng nhập thành công",
       token,
     });
   } catch (error) {
-    console.error(error);
+    console.log(error)
     res.status(500).send({
-      message: req.translate("error.server"),
+      message: "Sai mật khẩu hoặc email"
     });
   }
 };
