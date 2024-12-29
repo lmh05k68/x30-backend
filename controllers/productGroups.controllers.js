@@ -1,9 +1,11 @@
 import { v2 as cloudinary } from "cloudinary";
+import mongoose from "mongoose";
 import {
   getProductGroupsByShopId,
   createProductGroup,
   getProductGroupById,
   getAllProductGroups,
+  findProductGroupByCategoryId
 } from "../repositories/productGroups.repository.js";
 
 cloudinary.config({
@@ -136,4 +138,20 @@ export const sellerAddProduct = async (req, res) => {
         message: error.message,
       });
     }
+};
+
+export const buyerGetProductGroupByCategoryId = async (req, res) => {
+  const { categoryIds } = req.body;
+  const categoryArray = categoryIds.map(id => mongoose.Types.ObjectId(id))
+  try {
+      const productGroups = await findProductGroupByCategoryId({ 
+          categoryIds: { $in: categoryArray } 
+      });
+      console.log(productGroups);
+      res.status(200).send(productGroups);
+  } catch (error) {
+      res.status(404).send({
+          message: error.message,
+      });
+  }
 };
