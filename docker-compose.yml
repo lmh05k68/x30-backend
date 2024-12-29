@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+  backend:
+    image: wardrobe-app-be
+    container_name: wardrobe-app-be
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8200:8000"
+    restart: always
