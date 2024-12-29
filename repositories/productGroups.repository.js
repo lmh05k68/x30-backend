@@ -38,3 +38,5 @@ export const getProductGroupsByShopId = async (shopId, filter = {}) => {
 export const getOneProductInProductGroup = (info) =>
   ProductGroupModel.findOne(info);
 export const createProductGroup = (data) => ProductGroupModel.create(data);
+
+export const findProductGroupByCategoryId = (info) => ProductGroupModel.find(info)

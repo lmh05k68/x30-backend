@@ -7,6 +7,7 @@ import {
   sellerAddProduct,
   buyerGetProductGroups,
   buyerGetProductGroupById,
+  buyerGetProductGroupByCategoryId,
 } from "../controllers/productGroups.controllers.js";
 import sellerAuthMiddleware from "../middlewares/seller.auth.middleware.js";
 
@@ -40,5 +41,6 @@ ProductGroupsRouter.patch(
 
 ProductGroupsRouter.get("/buyer/products", buyerGetProductGroups);
 ProductGroupsRouter.get("/buyer/productgroup", buyerGetProductGroupById);
+ProductGroupsRouter.post("/buyer/filter_productGroups", buyerGetProductGroupByCategoryId)
 
 export default ProductGroupsRouter;
